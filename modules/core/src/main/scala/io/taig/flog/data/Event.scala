@@ -11,9 +11,11 @@ final case class Event(
     scope: Scope,
     message: String,
     payload: JsonObject,
-    throwable: Option[Throwable]
+    throwable: Option[Throwable],
+    correlation: Option[String]
 ) {
-  def defaults(context: Context): Event = prefix(context.prefix).presets(context.presets)
+  def defaults(context: Context): Event =
+    prefix(context.prefix).presets(context.presets).copy(correlation = context.correlation)
 
   def prefix(scope: Scope): Event = copy(scope = scope ++ this.scope)
 
@@ -29,7 +31,8 @@ object Event {
         "scope" := event.scope.show,
         "message" := Some(event.message).filter(_.nonEmpty),
         "payload" := event.payload,
-        "stacktrace" := event.throwable.map(Printer.throwable)
+        "stacktrace" := event.throwable.map(Printer.throwable),
+        "correlation" := event.correlation
       )
     }
 }

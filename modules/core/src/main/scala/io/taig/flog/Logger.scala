@@ -23,8 +23,9 @@ abstract class Logger[F[_]] {
       scope: Scope = Scope.Root,
       message: String = "",
       payload: => JsonObject = JsonObject.empty,
-      throwable: Option[Throwable] = None
-  ): F[Unit] = log { timestamp => List(Event(timestamp, level, scope, message, payload, throwable)) }
+      throwable: Option[Throwable] = None,
+      correlation: Option[String] = None
+  ): F[Unit] = log { timestamp => List(Event(timestamp, level, scope, message, payload, throwable, correlation)) }
 
   final def debug(
       scope: Scope,

@@ -12,9 +12,8 @@ trait Builders[L[A[_]]] {
   def defaults[F[_]](context: Context)(logger: L[F]): L[F]
 
   /** Prefix all events of this logger with the given `Scope` */
-  final def prefix[F[_]](scope: Scope)(logger: L[F]): L[F] =
-    defaults(Context(scope, JsonObject.empty))(logger)
+  final def prefix[F[_]](scope: Scope)(logger: L[F]): L[F] = defaults(Context(scope, JsonObject.empty, None))(logger)
 
   final def presets[F[_]](payload: JsonObject)(logger: L[F]): L[F] =
-    defaults(Context(Scope.Root, payload))(logger)
+    defaults(Context(Scope.Root, payload, None))(logger)
 }
