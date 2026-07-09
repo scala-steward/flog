@@ -14,7 +14,7 @@ object Scope:
   extension (self: Scope)
     def isEmpty: Boolean = self.isEmpty
     def /(segment: String): Scope = if segment.isEmpty then self else Scope(self :+ segment)
-    def ++(scope: Scope): Scope = Scope(self ++ scope.toChain)
+    def ++(scope: Scope): Scope = self ++ scope.toChain
     def contains(scope: Scope): Boolean = self.show `contains` scope.show
     def startsWith(segment: String): Boolean = self.headOption.contains(segment)
     def endsWith(segment: String): Boolean = self.lastOption.contains(segment)
@@ -23,7 +23,8 @@ object Scope:
 
   val Root: Scope = Scope(Chain.empty)
 
-  def apply(segments: Chain[String]): Scope = segments
+  inline def apply(segments: Chain[String]): Scope = segments
+
   def one(root: String): Scope = Chain.one(root)
   def from(segments: Iterable[String]): Scope = Chain.fromSeq(segments.toSeq)
   def of(segments: String*): Scope = Chain.fromSeq(segments)
@@ -43,7 +44,9 @@ object Scope:
     override def combine(x: Scope, y: Scope): Scope = x ++ y
 
   given (using order: Order[Chain[String]]): Eq[Scope] = order
-  given Show[Scope] = _.toChain match
+
+  given Show[Scope] =
     case Chain.nil => "/"
     case segments  => segments.mkString_(" / ")
+
   given Encoder[Scope] = Encoder[String].contramap(_.show)
