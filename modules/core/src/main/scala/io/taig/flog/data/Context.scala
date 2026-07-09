@@ -14,7 +14,9 @@ final case class Context(prefix: Scope, presets: JsonObject):
 
   def withPresets(presets: JsonObject): Context = modifyPresets(_ => presets)
 
-  def append(prefix: Scope): Context = modifyScope(_ ++ prefix)
+  def append(suffix: Scope): Context = modifyScope(_ ++ suffix)
+
+  def prepend(prefix: Scope): Context = modifyScope(prefix ++ _)
 
   def combine(payload: JsonObject): Context = modifyPresets(_ `deepMerge` payload)
 

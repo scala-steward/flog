@@ -15,7 +15,7 @@ object Scope:
     def isEmpty: Boolean = self.isEmpty
     def /(segment: String): Scope = if segment.isEmpty then self else Scope(self :+ segment)
     def ++(scope: Scope): Scope = self ++ scope.toChain
-    def contains(scope: Scope): Boolean = self.show `contains` scope.show
+    def contains(scope: Scope): Boolean = show.show(self) `contains` show.show(scope)
     def startsWith(segment: String): Boolean = self.headOption.contains(segment)
     def endsWith(segment: String): Boolean = self.lastOption.contains(segment)
     def toChain: Chain[String] = self
@@ -39,14 +39,15 @@ object Scope:
   def fromSimpleClassName(value: Any): Scope = fromName(value.getClass.getSimpleName)
   def fromSimpleClassName[A: ClassTag]: Scope = fromName(classTag[A].runtimeClass.getSimpleName)
 
-  given Monoid[Scope] with
-    override def empty: Scope = Root
-    override def combine(x: Scope, y: Scope): Scope = x ++ y
+  given (using monoid: Monoid[Chain[String]]): Monoid[Scope] = monoid
 
   given (using order: Order[Chain[String]]): Eq[Scope] = order
 
-  given Show[Scope] =
+  /** Referenced explicitly instead of via `.show` syntax, because within this object `Scope` is transparently a
+    * `Chain[String]`, which would resolve to cats' `Show[Chain]` instance
+    */
+  given show: Show[Scope] =
     case Chain.nil => "/"
     case segments  => segments.mkString_(" / ")
 
-  given Encoder[Scope] = Encoder[String].contramap(_.show)
+  given Encoder[Scope] = Encoder[String].contramap(show.show)
