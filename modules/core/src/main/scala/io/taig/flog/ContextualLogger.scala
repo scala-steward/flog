@@ -51,9 +51,20 @@ object ContextualLogger:
     override def scope[A](context: Context)(run: F[A]): F[A] = run
     override def log(events: Long => List[Event]): F[Unit] = F.unit
 
+  /** Carries the accumulated modification of a `ContextualLogger` so that repeated `modify` calls compose in
+    * declaration order
+    *
+    * Events flow from the outermost decorator inwards, so plain nesting would apply the most recently added
+    * modification first.
+    */
+  final private case class Modified[F[_]](logger: ContextualLogger[F], f: List[Event] => List[Event])
+      extends ContextualLogger[F]:
+    override def log(events: Long => List[Event]): F[Unit] = logger.log(timestamp => f(events(timestamp)))
+    override def context: F[Context] = logger.context
+    override def local[A](g: Context => Context)(run: F[A]): F[A] = logger.local(g)(run)
+    override def scope[A](context: Context)(run: F[A]): F[A] = logger.scope(context)(run)
+
   implicit class Ops[F[_]](logger: ContextualLogger[F]) extends LoggerOps[ContextualLogger, F]:
-    override def modify(f: List[Event] => List[Event]): ContextualLogger[F] = new ContextualLogger[F]:
-      override def log(events: Long => List[Event]): F[Unit] = logger.log(timestamp => f(events(timestamp)))
-      override def context: F[Context] = logger.context
-      override def local[A](f: Context => Context)(run: F[A]): F[A] = logger.local(f)(run)
-      override def scope[A](context: Context)(run: F[A]): F[A] = logger.scope(context)(run)
+    override def modify(g: List[Event] => List[Event]): ContextualLogger[F] = logger match
+      case Modified(logger, f) => Modified(logger, f.andThen(g))
+      case _                   => Modified(logger, g)

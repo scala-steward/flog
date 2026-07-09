@@ -129,6 +129,15 @@ object Logger:
   /** This `Logger` does nothing */
   def noop[F[_]](implicit F: Applicative[F]): Logger[F] = _ => F.unit
 
+  /** Carries the accumulated modification of a `Logger` so that repeated `modify` calls compose in declaration order
+    *
+    * Events flow from the outermost decorator inwards, so plain nesting would apply the most recently added
+    * modification first.
+    */
+  final private case class Modified[F[_]](logger: Logger[F], f: List[Event] => List[Event]) extends Logger[F]:
+    override def log(events: Long => List[Event]): F[Unit] = logger.log(timestamp => f(events(timestamp)))
+
   implicit class Ops[F[_]](logger: Logger[F]) extends LoggerOps[Logger, F]:
-    override def modify(f: List[Event] => List[Event]): Logger[F] =
-      events => logger.log(timestamp => f(events(timestamp)))
+    override def modify(g: List[Event] => List[Event]): Logger[F] = logger match
+      case Modified(logger, f) => Modified(logger, f.andThen(g))
+      case _                   => Modified(logger, g)
