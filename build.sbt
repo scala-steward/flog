@@ -8,7 +8,7 @@ val Version = new {
   val Http4s = "1.0.0-M47"
   val Java = "17"
   val Log4Cats = "2.8.0"
-  val Munit = "1.2.4"
+  val Munit = "1.3.3"
   val MunitCatsEffect = "2.2.0"
   val Scala3 = "3.3.8"
   val Slf4j = "1.7.36"
@@ -23,6 +23,7 @@ def module(identifier: Option[String], jvmOnly: Boolean = false): CrossProject =
     .build()
     .settings(
       Compile / scalacOptions ++= "-source:future" :: "-rewrite" :: "-new-syntax" :: "-Wunused:all" :: Nil,
+      Test / testOptions += Tests.Argument(TestFrameworks.MUnit, "--log=debug"),
       name := "flog" + identifier.fold("")("-" + _)
     )
 }
