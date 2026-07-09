@@ -39,9 +39,9 @@ object Scope:
   def fromSimpleClassName(value: Any): Scope = fromName(value.getClass.getSimpleName)
   def fromSimpleClassName[A: ClassTag]: Scope = fromName(classTag[A].runtimeClass.getSimpleName)
 
-  given (using monoid: Monoid[Chain[String]]): Monoid[Scope] = monoid
+  given Monoid[Scope] = Chain.catsDataMonoidForChain
 
-  given (using order: Order[Chain[String]]): Eq[Scope] = order
+  given Order[Scope] = Chain.catsDataOrderForChain[String]
 
   /** Referenced explicitly instead of via `.show` syntax, because within this object `Scope` is transparently a
     * `Chain[String]`, which would resolve to cats' `Show[Chain]` instance
